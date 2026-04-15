@@ -91,7 +91,7 @@
   }
 
   function shouldUseCoverMode() {
-    return window.innerWidth <= 760 && Boolean(state.stream);
+    return window.innerWidth <= 760 && Boolean(state.stream) && !state.frameFrozen;
   }
 
   function renderSourceContained(targetCtx, source, width, height) {
