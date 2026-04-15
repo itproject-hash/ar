@@ -32,6 +32,11 @@ body.camera-live {
   background: #02040b;
 }
 
+body.camera-session {
+  background: #02040b;
+  overflow: hidden;
+}
+
 .ar-header h1 {
   margin: 10px 0 8px;
   font-size: clamp(28px, 6vw, 44px);
@@ -293,30 +298,44 @@ body.camera-live {
     display: none;
   }
 
-  body.camera-live .ar-shell {
+  body.camera-session .ar-shell {
     padding: 0;
     max-width: none;
+    width: 100%;
   }
 
-  body.camera-live .ar-stage {
-    margin-top: 0;
-    padding: 0;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-  }
-
-  body.camera-live .ar-controls,
-  body.camera-live .legend {
+  body.camera-session .legend {
     display: none;
   }
 
-  .ar-stage {
+  body.camera-session .ar-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
     margin-top: 0;
     padding: 0;
     background: transparent;
     border: 0;
     box-shadow: none;
+  }
+
+  body.camera-session .ar-controls {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    margin-top: 0;
+    padding: 18px 14px calc(env(safe-area-inset-bottom, 0px) + 18px);
+    border-radius: 24px 24px 0 0;
+    background: linear-gradient(180deg, rgba(9, 15, 28, 0.82), rgba(9, 15, 28, 0.98));
+    backdrop-filter: blur(14px);
+    max-height: 42svh;
+    overflow: auto;
+  }
+
+  body.camera-live .ar-controls {
+    display: none;
   }
 
   .ar-shell {
@@ -334,12 +353,16 @@ body.camera-live {
 
   .camera-wrap {
     width: 100%;
-    border-radius: 26px;
-  }
-
-  body.camera-live .camera-wrap {
     min-height: 100svh;
     height: 100svh;
+    border-radius: 0;
+    border: 0;
+  }
+
+  body.camera-session #cameraFeed,
+  body.camera-session #frameCanvas,
+  body.camera-session #overlayCanvas {
+    object-fit: cover;
   }
 
   .capture-btn {

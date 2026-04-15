@@ -36,11 +36,13 @@
   }
 
   function syncUiMode() {
+    document.body.classList.toggle("camera-session", Boolean(state.stream));
     document.body.classList.toggle("camera-live", Boolean(state.stream) && !state.frameFrozen);
   }
 
   function syncFreezeButton() {
     DOM.freezeFrameBtn.dataset.frozen = state.frameFrozen ? "true" : "false";
+    DOM.freezeFrameBtn.hidden = state.frameFrozen;
   }
 
   function getViewportOrientation() {
@@ -88,12 +90,17 @@
     };
   }
 
+  function shouldUseCoverMode() {
+    return window.innerWidth <= 760 && Boolean(state.stream);
+  }
+
   function renderSourceContained(targetCtx, source, width, height) {
     if (!source) return;
 
     const sourceWidth = source.videoWidth || source.width || 1;
     const sourceHeight = source.videoHeight || source.height || 1;
-    const scale = Math.min(width / sourceWidth, height / sourceHeight);
+    const scaleMode = shouldUseCoverMode() ? Math.max : Math.min;
+    const scale = scaleMode(width / sourceWidth, height / sourceHeight);
     const drawWidth = sourceWidth * scale;
     const drawHeight = sourceHeight * scale;
     const dx = (width - drawWidth) / 2;
