@@ -308,7 +308,7 @@ body.camera-session {
     display: none;
   }
 
-  body.camera-session .ar-stage {
+  body.camera-live .ar-stage {
     position: fixed;
     inset: 0;
     z-index: 1;
@@ -319,7 +319,7 @@ body.camera-session {
     box-shadow: none;
   }
 
-  body.camera-session .ar-controls {
+  body.camera-live .ar-controls {
     position: fixed;
     left: 0;
     right: 0;
@@ -338,6 +338,37 @@ body.camera-session {
     display: none;
   }
 
+  body.camera-session:not(.camera-live) .ar-shell {
+    padding: 10px 10px 20px;
+  }
+
+  body.camera-session:not(.camera-live) .ar-stage {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    margin-top: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  body.camera-session:not(.camera-live) .ar-controls {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    margin-top: 12px;
+    padding: 18px 14px 20px;
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(18, 27, 47, 0.96), rgba(10, 18, 34, 0.96));
+    backdrop-filter: none;
+    max-height: none;
+    overflow: visible;
+    display: block;
+  }
+
   .ar-shell {
     width: 100%;
     padding: 10px 10px 20px;
@@ -351,7 +382,7 @@ body.camera-session {
     grid-template-columns: 1fr;
   }
 
-  .camera-wrap {
+  body.camera-live .camera-wrap {
     width: 100%;
     min-height: 100svh;
     height: 100svh;
@@ -359,10 +390,25 @@ body.camera-session {
     border: 0;
   }
 
-  body.camera-session #cameraFeed,
-  body.camera-session #frameCanvas,
-  body.camera-session #overlayCanvas {
+  body.camera-live #cameraFeed,
+  body.camera-live #frameCanvas,
+  body.camera-live #overlayCanvas {
     object-fit: cover;
+  }
+
+  body.camera-session:not(.camera-live) .camera-wrap {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 9 / 16;
+    border-radius: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+  }
+
+  body.camera-session:not(.camera-live) #cameraFeed,
+  body.camera-session:not(.camera-live) #frameCanvas,
+  body.camera-session:not(.camera-live) #overlayCanvas {
+    object-fit: contain;
   }
 
   .capture-btn {
