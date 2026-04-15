@@ -167,6 +167,7 @@ body.camera-session {
 }
 
 #cameraFeed,
+#frozenImage,
 #frameCanvas,
 #overlayCanvas {
   position: absolute;
@@ -176,11 +177,17 @@ body.camera-session {
 }
 
 #cameraFeed,
+#frozenImage,
 #frameCanvas {
   background: #02040b;
 }
 
 #cameraFeed {
+  object-fit: contain;
+}
+
+#frozenImage {
+  display: none;
   object-fit: contain;
 }
 
@@ -391,6 +398,7 @@ body.camera-session {
   }
 
   body.camera-live #cameraFeed,
+  body.camera-live #frozenImage,
   body.camera-live #frameCanvas,
   body.camera-live #overlayCanvas {
     object-fit: cover;
@@ -406,6 +414,7 @@ body.camera-session {
   }
 
   body.camera-session:not(.camera-live) #cameraFeed,
+  body.camera-session:not(.camera-live) #frozenImage,
   body.camera-session:not(.camera-live) #frameCanvas,
   body.camera-session:not(.camera-live) #overlayCanvas {
     object-fit: contain;

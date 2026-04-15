@@ -10,6 +10,7 @@
     scaleRange: document.getElementById("scaleRange"),
     scaleInput: document.getElementById("scaleInput"),
     cameraFeed: document.getElementById("cameraFeed"),
+    frozenImage: document.getElementById("frozenImage"),
     frameCanvas: document.getElementById("frameCanvas"),
     overlayCanvas: document.getElementById("overlayCanvas"),
     cameraEmpty: document.getElementById("cameraEmpty"),
@@ -27,6 +28,7 @@
     scalePercent: 100,
     frameFrozen: false,
     frozenFrameSource: null,
+    frozenFrameUrl: "",
     dragPointIndex: -1
   };
 
@@ -252,7 +254,8 @@
 
   function setPreviewMode() {
     DOM.cameraFeed.style.display = state.frameFrozen ? "none" : "block";
-    DOM.frameCanvas.style.display = state.frameFrozen ? "block" : "none";
+    DOM.frozenImage.style.display = state.frameFrozen ? "block" : "none";
+    DOM.frameCanvas.style.display = "none";
     syncUiMode();
     syncFreezeButton();
   }
@@ -315,11 +318,13 @@
     frozenSource.getContext("2d").drawImage(DOM.cameraFeed, 0, 0, frozenSource.width, frozenSource.height);
 
     state.frozenFrameSource = frozenSource;
+    state.frozenFrameUrl = frozenSource.toDataURL("image/png");
     state.frameFrozen = true;
     state.points = suggestWallQuad();
     state.dragPointIndex = -1;
+    DOM.frozenImage.src = state.frozenFrameUrl;
+    updateStageAspectRatio(frozenSource);
     setPreviewMode();
-    drawFrozenFrame();
     drawOverlay();
     setStatus("კადრი გაყინულია", "საწყისი ჩარჩო დაემატა. თუ საჭიროა, წერტილები თითით გადაათრიე.");
   }
@@ -328,6 +333,8 @@
     state.frameFrozen = false;
     state.points = [];
     state.frozenFrameSource = null;
+    state.frozenFrameUrl = "";
+    DOM.frozenImage.removeAttribute("src");
     state.dragPointIndex = -1;
     setPreviewMode();
     drawOverlay();
