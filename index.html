@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AR Wall Preview MVP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="ar-shell">
+    <header class="ar-header">
+      <div>
+        <span class="ar-badge">MVP</span>
+        <h1>კედლის კამერით პრივიუ</h1>
+        <p>გახსენი კამერა, მონიშნე 4 წერტილი, ატვირთე ტექსტურა და ნახე კედელზე.</p>
+      </div>
+    </header>
+
+    <section class="ar-card ar-controls">
+      <div class="control-grid">
+        <button type="button" class="ar-btn ar-btn--primary" id="startCameraBtn">კამერის გახსნა</button>
+        <label class="ar-upload">
+          <input type="file" id="textureInput" accept="image/*" />
+          <span>ტექსტურის ატვირთვა</span>
+        </label>
+        <button type="button" class="ar-btn" id="resetPointsBtn">წერტილების გასუფთავება</button>
+        <button type="button" class="ar-btn" id="screenshotBtn">სქრინშოტი</button>
+      </div>
+
+      <div class="control-grid control-grid--compact">
+        <label class="field">
+          <span>Texture Scale (%)</span>
+          <input type="range" id="scaleRange" min="20" max="240" step="1" value="100" />
+        </label>
+        <label class="field field--small">
+          <span>Scale</span>
+          <input type="number" id="scaleInput" min="20" max="240" step="1" value="100" />
+        </label>
+      </div>
+
+      <div class="status-box">
+        <strong id="statusTitle">მზადაა</strong>
+        <p id="statusText">ჯერ გაუშვი კამერა, შემდეგ მონიშნე 4 წერტილი: ზედა მარცხენა, ზედა მარჯვენა, ქვედა მარჯვენა, ქვედა მარცხენა.</p>
+      </div>
+    </section>
+
+    <section class="ar-card ar-stage">
+      <div class="camera-wrap" id="cameraWrap">
+        <video id="cameraFeed" playsinline autoplay muted></video>
+        <canvas id="overlayCanvas"></canvas>
+        <div class="camera-empty" id="cameraEmpty">
+          <div class="camera-empty__box">
+            <strong>კამერა არ არის გაშვებული</strong>
+            <span>ტელეფონში გამოიყენე HTTPS ან localhost, რადგან კამერის ნებართვა იმუშავოს.</span>
+          </div>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i class="dot dot--point"></i> მონიშნული წერტილები</span>
+        <span><i class="dot dot--wall"></i> არჩეული კედელი</span>
+        <span><i class="dot dot--texture"></i> ტექსტურის overlay</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
