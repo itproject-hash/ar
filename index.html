@@ -2,7 +2,7 @@
 <html lang="ka">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>AR Wall Preview MVP</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,13 +15,14 @@
       <div>
         <span class="ar-badge">MVP</span>
         <h1>კედლის კამერით პრივიუ</h1>
-        <p>გახსენი კამერა, მონიშნე 4 წერტილი, ატვირთე ტექსტურა და ნახე კედელზე.</p>
+        <p>გაასწორე კადრი, გაყინე სურათი, მონიშნე 4 წერტილი და ნახე ტექსტურა კედელზე.</p>
       </div>
     </header>
 
     <section class="ar-card ar-controls">
       <div class="control-grid">
         <button type="button" class="ar-btn ar-btn--primary" id="startCameraBtn">კამერის გახსნა</button>
+        <button type="button" class="ar-btn" id="freezeFrameBtn">Freeze Frame</button>
         <label class="ar-upload">
           <input type="file" id="textureInput" accept="image/*" />
           <span>ტექსტურის ატვირთვა</span>
@@ -43,18 +44,19 @@
 
       <div class="status-box">
         <strong id="statusTitle">მზადაა</strong>
-        <p id="statusText">ჯერ გაუშვი კამერა, შემდეგ მონიშნე 4 წერტილი: ზედა მარცხენა, ზედა მარჯვენა, ქვედა მარჯვენა, ქვედა მარცხენა.</p>
+        <p id="statusText">გახსენი კამერა, მოათავსე კედელი კადრში, შემდეგ დააჭირე Freeze Frame-ს და მონიშნე 4 კუთხე.</p>
       </div>
     </section>
 
     <section class="ar-card ar-stage">
       <div class="camera-wrap" id="cameraWrap">
         <video id="cameraFeed" playsinline autoplay muted></video>
+        <canvas id="frameCanvas"></canvas>
         <canvas id="overlayCanvas"></canvas>
         <div class="camera-empty" id="cameraEmpty">
           <div class="camera-empty__box">
-            <strong>კამერა არ არის გაშვებული</strong>
-            <span>ტელეფონში გამოიყენე HTTPS ან localhost, რადგან კამერის ნებართვა იმუშავოს.</span>
+            <strong>კამერა ჯერ არ არის ჩართული</strong>
+            <span>ტელეფონში გამოიყენე HTTPS ან localhost, რათა კამერის ნებართვა იმუშაოს.</span>
           </div>
         </div>
       </div>

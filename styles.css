@@ -13,6 +13,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
+
 body {
   font-family: "Noto Sans Georgian", sans-serif;
   background:
@@ -66,7 +67,7 @@ body {
 
 .control-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -152,28 +153,33 @@ body {
   overflow: hidden;
   border-radius: 22px;
   background: #03070f;
-  min-height: 62vh;
+  min-height: min(72svh, 900px);
   border: 1px solid rgba(148, 163, 184, 0.16);
 }
 
 #cameraFeed,
-#overlayCanvas {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-#cameraFeed {
-  aspect-ratio: 9 / 16;
-  object-fit: cover;
-  background: #02040b;
-}
-
+#frameCanvas,
 #overlayCanvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+#cameraFeed,
+#frameCanvas {
+  background: #02040b;
+}
+
+#cameraFeed {
+  object-fit: contain;
+}
+
+#frameCanvas {
+  display: none;
+}
+
+#overlayCanvas {
   touch-action: none;
 }
 
@@ -252,6 +258,6 @@ body {
   }
 
   .camera-wrap {
-    min-height: 56vh;
+    min-height: 68svh;
   }
 }
