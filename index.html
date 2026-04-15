@@ -19,10 +19,33 @@
       </div>
     </header>
 
+    <section class="ar-card ar-stage">
+      <div class="camera-wrap" id="cameraWrap">
+        <video id="cameraFeed" playsinline autoplay muted></video>
+        <canvas id="frameCanvas"></canvas>
+        <canvas id="overlayCanvas"></canvas>
+        <button type="button" class="capture-btn" id="freezeFrameBtn" aria-label="Freeze frame">
+          <span class="capture-btn__outer">
+            <span class="capture-btn__inner"></span>
+          </span>
+        </button>
+        <div class="camera-empty" id="cameraEmpty">
+          <div class="camera-empty__box">
+            <strong>კამერა ჯერ არ არის ჩართული</strong>
+            <span>ტელეფონში გამოიყენე HTTPS ან localhost, რათა კამერის ნებართვა იმუშაოს.</span>
+          </div>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i class="dot dot--point"></i> მონიშნული წერტილები</span>
+        <span><i class="dot dot--wall"></i> არჩეული კედელი</span>
+        <span><i class="dot dot--texture"></i> ტექსტურის overlay</span>
+      </div>
+    </section>
+
     <section class="ar-card ar-controls">
       <div class="control-grid">
         <button type="button" class="ar-btn ar-btn--primary" id="startCameraBtn">კამერის გახსნა</button>
-        <button type="button" class="ar-btn" id="freezeFrameBtn">Freeze Frame</button>
         <label class="ar-upload">
           <input type="file" id="textureInput" accept="image/*" />
           <span>ტექსტურის ატვირთვა</span>
@@ -44,26 +67,7 @@
 
       <div class="status-box">
         <strong id="statusTitle">მზადაა</strong>
-        <p id="statusText">გახსენი კამერა, მოათავსე კედელი კადრში, შემდეგ დააჭირე Freeze Frame-ს და მონიშნე 4 კუთხე.</p>
-      </div>
-    </section>
-
-    <section class="ar-card ar-stage">
-      <div class="camera-wrap" id="cameraWrap">
-        <video id="cameraFeed" playsinline autoplay muted></video>
-        <canvas id="frameCanvas"></canvas>
-        <canvas id="overlayCanvas"></canvas>
-        <div class="camera-empty" id="cameraEmpty">
-          <div class="camera-empty__box">
-            <strong>კამერა ჯერ არ არის ჩართული</strong>
-            <span>ტელეფონში გამოიყენე HTTPS ან localhost, რათა კამერის ნებართვა იმუშაოს.</span>
-          </div>
-        </div>
-      </div>
-      <div class="legend">
-        <span><i class="dot dot--point"></i> მონიშნული წერტილები</span>
-        <span><i class="dot dot--wall"></i> არჩეული კედელი</span>
-        <span><i class="dot dot--texture"></i> ტექსტურის overlay</span>
+        <p id="statusText">გახსენი კამერა, მოათავსე კედელი კადრში, დააჭირე capture ღილაკს, შემდეგ საჭიროებისას გადაასწორე კუთხეები.</p>
       </div>
     </section>
   </main>

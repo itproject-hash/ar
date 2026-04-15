@@ -26,7 +26,8 @@
     points: [],
     scalePercent: 100,
     frameFrozen: false,
-    frozenFrameSource: null
+    frozenFrameSource: null,
+    dragPointIndex: -1
   };
 
   function setStatus(title, text) {
@@ -35,7 +36,7 @@
   }
 
   function syncFreezeButton() {
-    DOM.freezeFrameBtn.textContent = state.frameFrozen ? "Retake Frame" : "Freeze Frame";
+    DOM.freezeFrameBtn.dataset.frozen = state.frameFrozen ? "true" : "false";
   }
 
   function getViewportOrientation() {
@@ -72,8 +73,7 @@
     canvas.height = Math.max(1, Math.round(height * dpr));
     canvas.style.width = width + "px";
     canvas.style.height = height + "px";
-    const ctx = canvas.getContext("2d");
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    canvas.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   function getStageSize() {
@@ -149,15 +149,13 @@
     const tileCanvas = document.createElement("canvas");
     tileCanvas.width = Math.max(64, Math.round(tileWidth));
     tileCanvas.height = Math.max(64, Math.round(tileHeight));
-    const tileCtx = tileCanvas.getContext("2d");
-    tileCtx.drawImage(image, 0, 0, tileCanvas.width, tileCanvas.height);
+    tileCanvas.getContext("2d").drawImage(image, 0, 0, tileCanvas.width, tileCanvas.height);
 
     const patternCanvas = document.createElement("canvas");
     patternCanvas.width = Math.max(64, Math.round(approxWidth || 256));
     patternCanvas.height = Math.max(64, Math.round(approxHeight || 256));
     const pctx = patternCanvas.getContext("2d");
-    const pattern = pctx.createPattern(tileCanvas, "repeat");
-    pctx.fillStyle = pattern;
+    pctx.fillStyle = pctx.createPattern(tileCanvas, "repeat");
     pctx.fillRect(0, 0, patternCanvas.width, patternCanvas.height);
 
     for (let i = 0; i < strips; i += 1) {
@@ -230,7 +228,6 @@
   function resizeStage() {
     const size = getStageSize();
     const dpr = window.devicePixelRatio || 1;
-
     setCanvasSize(DOM.frameCanvas, size.width, size.height, dpr);
     setCanvasSize(DOM.overlayCanvas, size.width, size.height, dpr);
 
@@ -261,6 +258,7 @@
       state.stream = stream;
       state.frameFrozen = false;
       state.frozenFrameSource = null;
+      state.dragPointIndex = -1;
       DOM.cameraFeed.srcObject = stream;
       setPreviewMode();
 
@@ -269,7 +267,7 @@
         updateStageAspectRatio(DOM.cameraFeed);
         resizeStage();
         DOM.cameraEmpty.hidden = true;
-        setStatus("კამერა ჩაირთო", "მოათავსე კედელი კადრში. როცა პოზიცია მოგეწონება, დააჭირე Freeze Frame-ს და მერე მონიშნე 4 კუთხე.");
+        setStatus("კამერა მზადაა", "მოარგე კედელი კადრში და დააჭირე ქვედა მრგვალ ღილაკს.");
       };
     } catch (error) {
       console.error(error);
@@ -277,9 +275,24 @@
     }
   }
 
+  function suggestWallQuad() {
+    const size = getStageSize();
+    const insetX = size.width * 0.1;
+    const insetTop = size.height * 0.08;
+    const insetBottom = size.height * 0.12;
+    const skew = size.width * 0.05;
+
+    return [
+      { x: insetX + skew, y: insetTop },
+      { x: size.width - insetX - skew, y: insetTop },
+      { x: size.width - insetX, y: size.height - insetBottom },
+      { x: insetX, y: size.height - insetBottom }
+    ];
+  }
+
   function freezeCurrentFrame() {
     if (!state.stream || !DOM.cameraFeed.videoWidth) {
-      setStatus("ჯერ გახსენი კამერა", "ჯერ კამერა უნდა ჩაირთოს, რომ კადრი გაყინო.");
+      setStatus("ჯერ გახსენი კამერა", "სანამ კადრს გაყინავ, კამერა უნდა ჩაირთოს.");
       return;
     }
 
@@ -290,19 +303,22 @@
 
     state.frozenFrameSource = frozenSource;
     state.frameFrozen = true;
+    state.points = suggestWallQuad();
+    state.dragPointIndex = -1;
     setPreviewMode();
     drawFrozenFrame();
     drawOverlay();
-    setStatus("კადრი გაყინულია", "ახლა კამერა აღარ 'გაგექცევა'. მონიშნე 4 წერტილი გაყინულ კადრზე.");
+    setStatus("კადრი გაყინულია", "საწყისი ჩარჩო დაემატა. თუ საჭიროა, წერტილები თითით გადაათრიე.");
   }
 
   function unfreezeFrame() {
     state.frameFrozen = false;
     state.points = [];
     state.frozenFrameSource = null;
+    state.dragPointIndex = -1;
     setPreviewMode();
     drawOverlay();
-    setStatus("გადაიღე ახალი კადრი", "კამერა ისევ ცოცხალია. გაასწორე ხედვა და საჭიროებისას თავიდან გაყინე frame.");
+    setStatus("ახალი კადრი", "გადაამოწმე კედელი და ისევ დააჭირე მრგვალ ღილაკს.");
   }
 
   function toggleFreezeFrame() {
@@ -322,6 +338,29 @@
     };
   }
 
+  function clampPoint(point) {
+    const size = getStageSize();
+    return {
+      x: Math.max(0, Math.min(size.width, point.x)),
+      y: Math.max(0, Math.min(size.height, point.y))
+    };
+  }
+
+  function getClosestPointIndex(point) {
+    let bestIndex = -1;
+    let bestDistance = 28;
+
+    state.points.forEach(function (candidate, index) {
+      const distance = Math.hypot(candidate.x - point.x, candidate.y - point.y);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = index;
+      }
+    });
+
+    return bestIndex;
+  }
+
   function handleCanvasTap(event) {
     if (!state.stream) {
       setStatus("ჯერ გახსენი კამერა", "პირველ რიგში ჩართე კამერა.");
@@ -329,29 +368,34 @@
     }
 
     if (!state.frameFrozen) {
-      setStatus("ჯერ გაყინე კადრი", "წერტილების ზუსტად დასასმელად ჯერ დააჭირე Freeze Frame-ს.");
+      setStatus("ჯერ გაყინე კადრი", "წერტილების გასასწორებლად ჯერ დააჭირე ქვედა მრგვალ ღილაკს.");
       return;
     }
 
-    if (state.points.length >= 4) {
-      state.points = [];
-    }
-
-    state.points.push(getPointerPosition(event));
-
-    if (state.points.length < 4) {
-      const labels = ["ზედა მარცხენა", "ზედა მარჯვენა", "ქვედა მარჯვენა", "ქვედა მარცხენა"];
-      setStatus("წერტილი დაემატა", "შემდეგი წერტილი: " + labels[state.points.length] + ".");
-    } else {
-      setStatus(
-        "კედელი მონიშნულია",
-        state.textureImage
-          ? "ტექსტურა უკვე ჩანს. შეგიძლია scale შეცვალო ან სქრინშოტი გადაიღო."
-          : "ახლა ატვირთე ტექსტურა, რომ კედელზე დაინახო."
-      );
+    const pointer = getPointerPosition(event);
+    const closestIndex = getClosestPointIndex(pointer);
+    if (closestIndex !== -1) {
+      state.dragPointIndex = closestIndex;
     }
 
     drawOverlay();
+  }
+
+  function handleCanvasDrag(event) {
+    if (!state.frameFrozen || state.dragPointIndex === -1) return;
+    state.points[state.dragPointIndex] = clampPoint(getPointerPosition(event));
+    drawOverlay();
+  }
+
+  function stopCanvasDrag() {
+    if (state.dragPointIndex === -1) return;
+    state.dragPointIndex = -1;
+    setStatus(
+      "კედელი მონიშნულია",
+      state.textureImage
+        ? "ტექსტურა უკვე ჩანს. შეგიძლია scale შეცვალო ან სქრინშოტი გადაიღო."
+        : "ახლა ატვირთე ტექსტურა და შედეგი მაშინვე გამოჩნდება."
+    );
   }
 
   function handleTextureUpload(event) {
@@ -365,7 +409,7 @@
         "ტექსტურა ჩაიტვირთა",
         state.points.length === 4
           ? "overlay განახლდა. შეგიძლია scale შეცვალო ან სქრინშოტი გადაიღო."
-          : "ახლა გაყინე კადრი და მონიშნე 4 წერტილი, რომ ტექსტურა კედელზე დაჯდეს."
+          : "ახლა გაყინე კადრი და საჭიროებისას გადაასწორე კუთხეები."
       );
       drawOverlay();
     };
@@ -373,9 +417,11 @@
   }
 
   function resetPoints() {
-    state.points = [];
+    state.points = state.frameFrozen ? suggestWallQuad() : [];
     drawOverlay();
-    setStatus("წერტილები გასუფთავდა", "გაყინულ კადრზე თავიდან მონიშნე 4 წერტილი.");
+    setStatus("ჩარჩო განახლდა", state.frameFrozen
+      ? "ავტომატური ჩარჩო თავიდან დაემატა. გადაასწორე კუთხეები თუ საჭიროა."
+      : "ჯერ გახსენი კამერა და გაყინე კადრი.");
   }
 
   function syncScale(value) {
@@ -398,8 +444,12 @@
     exportCanvas.height = Math.max(1, Math.round(size.height));
     const exportCtx = exportCanvas.getContext("2d");
 
-    const source = state.frameFrozen ? state.frozenFrameSource : DOM.cameraFeed;
-    renderSourceContained(exportCtx, source, exportCanvas.width, exportCanvas.height);
+    renderSourceContained(
+      exportCtx,
+      state.frameFrozen ? state.frozenFrameSource : DOM.cameraFeed,
+      exportCanvas.width,
+      exportCanvas.height
+    );
 
     if (state.textureImage && state.points.length === 4) {
       drawTextureToQuad(state.textureImage, state.points, state.scalePercent, exportCtx);
@@ -407,12 +457,11 @@
 
     drawPoints(exportCtx);
 
-    const dataUrl = exportCanvas.toDataURL("image/png");
     const link = document.createElement("a");
-    link.href = dataUrl;
+    link.href = exportCanvas.toDataURL("image/png");
     link.download = "wall-preview-mvp.png";
     link.click();
-    setStatus("სქრინშოტი შეიქმნა", "ფაილი ჩამოიტვირთა.");
+    setStatus("სქრინშოტი მზადაა", "ფაილი ჩამოიტვირთა.");
   }
 
   DOM.startCameraBtn.addEventListener("click", startCamera);
@@ -423,6 +472,10 @@
   DOM.scaleRange.addEventListener("input", function () { syncScale(DOM.scaleRange.value); });
   DOM.scaleInput.addEventListener("input", function () { syncScale(DOM.scaleInput.value); });
   DOM.overlayCanvas.addEventListener("pointerdown", handleCanvasTap);
+  DOM.overlayCanvas.addEventListener("pointermove", handleCanvasDrag);
+  DOM.overlayCanvas.addEventListener("pointerup", stopCanvasDrag);
+  DOM.overlayCanvas.addEventListener("pointercancel", stopCanvasDrag);
+  DOM.overlayCanvas.addEventListener("pointerleave", stopCanvasDrag);
   window.addEventListener("resize", resizeStage);
 
   syncFreezeButton();
