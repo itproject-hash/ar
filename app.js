@@ -35,6 +35,10 @@
     DOM.statusText.textContent = text;
   }
 
+  function syncUiMode() {
+    document.body.classList.toggle("camera-live", Boolean(state.stream) && !state.frameFrozen);
+  }
+
   function syncFreezeButton() {
     DOM.freezeFrameBtn.dataset.frozen = state.frameFrozen ? "true" : "false";
   }
@@ -191,6 +195,7 @@
         p0.y - (sx * dy1) / sw
       );
 
+      ctx.globalAlpha = 0.72;
       ctx.drawImage(patternCanvas, 0, 0);
       ctx.restore();
     }
@@ -241,6 +246,7 @@
   function setPreviewMode() {
     DOM.cameraFeed.style.display = state.frameFrozen ? "none" : "block";
     DOM.frameCanvas.style.display = state.frameFrozen ? "block" : "none";
+    syncUiMode();
     syncFreezeButton();
   }
 

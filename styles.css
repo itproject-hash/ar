@@ -28,6 +28,10 @@ body {
   padding: 18px 14px 32px;
 }
 
+body.camera-live {
+  background: #02040b;
+}
+
 .ar-header h1 {
   margin: 10px 0 8px;
   font-size: clamp(28px, 6vw, 44px);
@@ -154,7 +158,6 @@ body {
   border-radius: 22px;
   background: #03070f;
   aspect-ratio: 9 / 16;
-  min-height: min(76svh, 980px);
   border: 1px solid rgba(148, 163, 184, 0.16);
 }
 
@@ -191,8 +194,8 @@ body {
   bottom: 18px;
   transform: translateX(-50%);
   z-index: 4;
-  width: 76px;
-  height: 76px;
+  width: 88px;
+  height: 88px;
   border: 0;
   background: transparent;
   padding: 0;
@@ -206,12 +209,12 @@ body {
 }
 
 .capture-btn__outer {
-  width: 76px;
-  height: 76px;
-  padding: 6px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 2px solid rgba(255, 255, 255, 0.78);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.32);
+  width: 88px;
+  height: 88px;
+  padding: 7px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
 }
 
 .capture-btn__inner {
@@ -290,6 +293,24 @@ body {
     display: none;
   }
 
+  body.camera-live .ar-shell {
+    padding: 0;
+    max-width: none;
+  }
+
+  body.camera-live .ar-stage {
+    margin-top: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  body.camera-live .ar-controls,
+  body.camera-live .legend {
+    display: none;
+  }
+
   .ar-stage {
     margin-top: 0;
     padding: 0;
@@ -313,11 +334,15 @@ body {
 
   .camera-wrap {
     width: 100%;
-    min-height: 84svh;
     border-radius: 26px;
   }
 
+  body.camera-live .camera-wrap {
+    min-height: 100svh;
+    height: 100svh;
+  }
+
   .capture-btn {
-    bottom: 22px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 26px);
   }
 }
