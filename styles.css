@@ -153,7 +153,7 @@ body {
   overflow: hidden;
   border-radius: 22px;
   background: #03070f;
-  min-height: min(72svh, 900px);
+  aspect-ratio: 9 / 16;
   border: 1px solid rgba(148, 163, 184, 0.16);
 }
 
@@ -258,6 +258,6 @@ body {
   }
 
   .camera-wrap {
-    min-height: 68svh;
+    width: 100%;
   }
 }

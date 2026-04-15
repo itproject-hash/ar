@@ -38,6 +38,35 @@
     DOM.freezeFrameBtn.textContent = state.frameFrozen ? "Retake Frame" : "Freeze Frame";
   }
 
+  function getViewportOrientation() {
+    return window.innerHeight >= window.innerWidth ? "portrait" : "landscape";
+  }
+
+  function getPreferredVideoConstraints() {
+    if (getViewportOrientation() === "portrait") {
+      return {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1080 },
+        height: { ideal: 1920 },
+        aspectRatio: { ideal: 9 / 16 }
+      };
+    }
+
+    return {
+      facingMode: { ideal: "environment" },
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+      aspectRatio: { ideal: 16 / 9 }
+    };
+  }
+
+  function updateStageAspectRatio(source) {
+    const sourceWidth = source && (source.videoWidth || source.width);
+    const sourceHeight = source && (source.videoHeight || source.height);
+    if (!sourceWidth || !sourceHeight) return;
+    DOM.cameraWrap.style.aspectRatio = sourceWidth + " / " + sourceHeight;
+  }
+
   function setCanvasSize(canvas, width, height, dpr) {
     canvas.width = Math.max(1, Math.round(width * dpr));
     canvas.height = Math.max(1, Math.round(height * dpr));
@@ -76,6 +105,7 @@
     frameCtx.clearRect(0, 0, size.width, size.height);
 
     if (state.frozenFrameSource) {
+      updateStageAspectRatio(state.frozenFrameSource);
       renderSourceContained(frameCtx, state.frozenFrameSource, size.width, size.height);
     }
   }
@@ -111,18 +141,24 @@
     const leftLength = Math.hypot(quad[3].x - quad[0].x, quad[3].y - quad[0].y);
     const approxWidth = Math.max(topLength, bottomLength, 1);
     const approxHeight = Math.max(leftLength, 1);
-    const scale = Math.max(0.2, scalePercent / 100);
+    const scale = Math.max(0.35, scalePercent / 100);
+    const baseTileWidth = Math.max(72, approxWidth / 3.5);
+    const tileWidth = Math.min(approxWidth, baseTileWidth * scale);
+    const tileHeight = Math.max(72, tileWidth * ((image.height || 1) / (image.width || 1)));
+
+    const tileCanvas = document.createElement("canvas");
+    tileCanvas.width = Math.max(64, Math.round(tileWidth));
+    tileCanvas.height = Math.max(64, Math.round(tileHeight));
+    const tileCtx = tileCanvas.getContext("2d");
+    tileCtx.drawImage(image, 0, 0, tileCanvas.width, tileCanvas.height);
 
     const patternCanvas = document.createElement("canvas");
-    patternCanvas.width = Math.max(64, Math.round((approxWidth / scale) || 256));
-    patternCanvas.height = Math.max(64, Math.round((approxHeight / scale) || 256));
+    patternCanvas.width = Math.max(64, Math.round(approxWidth || 256));
+    patternCanvas.height = Math.max(64, Math.round(approxHeight || 256));
     const pctx = patternCanvas.getContext("2d");
-    const pattern = pctx.createPattern(image, "repeat");
-    pctx.save();
-    pctx.scale(scale, scale);
+    const pattern = pctx.createPattern(tileCanvas, "repeat");
     pctx.fillStyle = pattern;
-    pctx.fillRect(0, 0, patternCanvas.width / scale, patternCanvas.height / scale);
-    pctx.restore();
+    pctx.fillRect(0, 0, patternCanvas.width, patternCanvas.height);
 
     for (let i = 0; i < strips; i += 1) {
       const t0 = i / strips;
@@ -218,11 +254,7 @@
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        },
+        video: getPreferredVideoConstraints(),
         audio: false
       });
 
@@ -234,6 +266,7 @@
 
       DOM.cameraFeed.onloadedmetadata = function () {
         DOM.cameraFeed.play().catch(function () {});
+        updateStageAspectRatio(DOM.cameraFeed);
         resizeStage();
         DOM.cameraEmpty.hidden = true;
         setStatus("კამერა ჩაირთო", "მოათავსე კედელი კადრში. როცა პოზიცია მოგეწონება, დააჭირე Freeze Frame-ს და მერე მონიშნე 4 კუთხე.");
