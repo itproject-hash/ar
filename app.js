@@ -262,94 +262,87 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     DRAW TEXTURE via perspective-correct scanline strips
-     The texture is tiled relative to the quad's own coordinate
-     system — scalePct=100 → one tile equals the quad's width.
+     DRAW TEXTURE — linear interpolation strips (proven approach)
+     quad: [TL, TR, BR, BL]  — sorted by sortQuad before calling
   ═══════════════════════════════════════════════════════════ */
+  function lerpPt(a, b, t) {
+    return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+  }
+
   function drawTexture(ctx, img, quad, scalePct, opacity) {
     if (!img || quad.length !== 4) return;
 
-    const H = solveH(quad);
-    if (!H) return;
+    // Sort into correct TL→TR→BR→BL order
+    const { w, h } = getSize();
+    const pick = (fx, fy) => quad.reduce((b, p) =>
+      Math.hypot(p.x-fx, p.y-fy) < Math.hypot(b.x-fx, b.y-fy) ? p : b);
+    const q = [ pick(0,0), pick(w,0), pick(w,h), pick(0,h) ];
 
-    // Physical size of the quad in screen pixels
-    const qw = Math.max(
-      Math.hypot(quad[1].x - quad[0].x, quad[1].y - quad[0].y),
-      Math.hypot(quad[2].x - quad[3].x, quad[2].y - quad[3].y), 1);
-    const qh = Math.max(
-      Math.hypot(quad[3].x - quad[0].x, quad[3].y - quad[0].y),
-      Math.hypot(quad[2].x - quad[1].x, quad[2].y - quad[1].y), 1);
+    const topLen    = Math.hypot(q[1].x-q[0].x, q[1].y-q[0].y);
+    const bottomLen = Math.hypot(q[2].x-q[3].x, q[2].y-q[3].y);
+    const leftLen   = Math.hypot(q[3].x-q[0].x, q[3].y-q[0].y);
+    const approxW   = Math.max(topLen, bottomLen, 1);
+    const approxH   = Math.max(leftLen, 1);
 
-    // Tile dimensions in quad-local pixels
-    // scalePct=100 → tile width = qw (one repeat across the wall)
-    const tileW = Math.max(4, qw * (scalePct / 100));
-    const tileH = Math.max(4, tileW * (img.naturalHeight / Math.max(img.naturalWidth, 1)));
+    const scale     = Math.max(0.05, scalePct / 100);
+    const tileW     = Math.max(16, approxW * scale);
+    const tileH     = Math.max(16, tileW * (img.naturalHeight || img.height || 1) /
+                                           Math.max(img.naturalWidth  || img.width  || 1, 1));
 
-    // Render a pattern canvas that covers the entire quad bbox
-    // We work in the quad's normalised space (0..1) so the pattern
-    // exactly fills the quad regardless of perspective.
-    const patW = Math.round(Math.max(64, qw));
-    const patH = Math.round(Math.max(64, qh));
+    // Build tiled pattern canvas
+    const patW = Math.ceil(approxW);
+    const patH = Math.ceil(approxH);
+    const tileC = document.createElement("canvas");
+    tileC.width  = Math.ceil(tileW);
+    tileC.height = Math.ceil(tileH);
+    tileC.getContext("2d").drawImage(img, 0, 0, tileC.width, tileC.height);
+
     const patC = document.createElement("canvas");
     patC.width  = patW;
     patC.height = patH;
-    const pc   = patC.getContext("2d");
-    const tw   = Math.round(tileW);
-    const th   = Math.round(tileH);
-    for (let py = 0; py < patH + th; py += th)
-      for (let px = 0; px < patW + tw; px += tw)
-        pc.drawImage(img, px, py, tw, th);
+    const pc = patC.getContext("2d");
+    pc.fillStyle = pc.createPattern(tileC, "repeat");
+    pc.fillRect(0, 0, patW, patH);
 
-    // Number of vertical strips for perspective correctness
-    const SLICES = Math.min(800, Math.max(80, Math.round(Math.max(qw, qh) / 1)));
+    const STRIPS = 120;
 
     ctx.save();
     ctx.globalAlpha = opacity;
 
-    // Clip to quad shape so texture never bleeds outside
-    ctx.beginPath();
-    ctx.moveTo(quad[0].x, quad[0].y);
-    ctx.lineTo(quad[1].x, quad[1].y);
-    ctx.lineTo(quad[2].x, quad[2].y);
-    ctx.lineTo(quad[3].x, quad[3].y);
-    ctx.closePath();
-    ctx.clip();
+    for (let i = 0; i < STRIPS; i++) {
+      const t0 = i / STRIPS, t1 = (i + 1) / STRIPS;
 
-    for (let i = 0; i < SLICES; i++) {
-      const t0 = i / SLICES, t1 = (i + 1) / SLICES;
-      // Four corners of this thin vertical strip in screen space
-      const d00 = proj(H, t0, 0); // top-left of strip
-      const d10 = proj(H, t1, 0); // top-right
-      const d11 = proj(H, t1, 1); // bottom-right
-      const d01 = proj(H, t0, 1); // bottom-left
+      // Interpolate along top edge (q[0]→q[1]) and bottom edge (q[3]→q[2])
+      const p0 = lerpPt(q[0], q[1], t0);  // top-left of strip
+      const p1 = lerpPt(q[0], q[1], t1);  // top-right of strip
+      const p2 = lerpPt(q[3], q[2], t1);  // bottom-right of strip
+      const p3 = lerpPt(q[3], q[2], t0);  // bottom-left of strip
 
-      // Corresponding x range in the pattern canvas
-      const sx0 = t0 * patW;
-      const sw  = (t1 - t0) * patW;
+      const sx = t0 * patW;
+      const sw = (t1 - t0) * patW;
+
+      // Affine: maps pattern (sx,0)→p0 and (sx+sw,0)→p1 and (sx,patH)→p3
+      const dx1 = p1.x - p0.x, dy1 = p1.y - p0.y;
+      const dx2 = p3.x - p0.x, dy2 = p3.y - p0.y;
 
       ctx.save();
-      // Clip to this strip
       ctx.beginPath();
-      ctx.moveTo(d00.x, d00.y);
-      ctx.lineTo(d10.x, d10.y);
-      ctx.lineTo(d11.x, d11.y);
-      ctx.lineTo(d01.x, d01.y);
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.lineTo(p3.x, p3.y);
       ctx.closePath();
       ctx.clip();
 
-      // Build affine transform that maps patC → this strip
-      const dxH = d10.x - d00.x, dyH = d10.y - d00.y; // horizontal direction
-      const dxV = d01.x - d00.x, dyV = d01.y - d00.y; // vertical direction
-
       ctx.transform(
-        dxH / sw,   dyH / sw,
-        dxV / patH, dyV / patH,
-        d00.x - sx0 * dxH / sw,
-        d00.y - sx0 * dyH / sw
+        dx1 / sw,          dy1 / sw,
+        dx2 / patH,        dy2 / patH,
+        p0.x - sx*dx1/sw,  p0.y - sx*dy1/sw
       );
       ctx.drawImage(patC, 0, 0);
       ctx.restore();
     }
+
     ctx.restore();
   }
 
