@@ -78,8 +78,8 @@
     // Confirm (✓) button
     DOM.confirmBtn.style.display = phase === "adjusting" ? "flex" : "none";
 
-    // Bottom panel
-    DOM.controlPanel.style.display = phase === "preview" ? "flex" : "none";
+    // Bottom panel — visible in idle and preview
+    DOM.controlPanel.style.display = (phase === "idle" || phase === "preview") ? "flex" : "none";
 
     // Empty placeholder
     DOM.cameraEmpty.hidden = phase !== "idle";
