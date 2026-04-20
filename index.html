@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>კედლის პრივიუ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -10,133 +13,129 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <main class="ar-shell">
 
-    <header class="ar-header">
-      <div>
-        <span class="ar-badge">AR Preview</span>
-        <h1>კედლის ტექსტურის პრივიუ</h1>
-        <p>გახსენი კამერა → გაყინე კადრი → გადაათრიე კუთხეები კედელზე → ატვირთე ტექსტურა.</p>
+  <!-- ═══ CAMERA VIEW (fullscreen on mobile) ══════════════════ -->
+  <div class="camera-wrap" id="cameraWrap">
+    <video id="cameraFeed" playsinline autoplay muted></video>
+    <img  id="frozenImage" alt="" />
+    <canvas id="overlayCanvas"></canvas>
+
+    <!-- Shutter (visible only during live feed) -->
+    <button class="capture-btn" id="freezeFrameBtn" aria-label="გადაღება">
+      <span class="capture-btn__outer"><span class="capture-btn__inner"></span></span>
+    </button>
+
+    <!-- Empty placeholder -->
+    <div class="camera-empty" id="cameraEmpty">
+      <div class="camera-empty__box">
+        <div class="camera-empty__icon">📷</div>
+        <strong>კამერა ჯერ არ არის ჩართული</strong>
+        <span>გახსენი კამერა ქვემოთ მოცემული ღილაკით</span>
       </div>
-    </header>
+    </div>
 
-    <!-- ════ CAMERA STAGE ════════════════════════════════════════ -->
-    <section class="ar-card ar-stage">
-      <div class="camera-wrap" id="cameraWrap">
-        <video id="cameraFeed" playsinline autoplay muted></video>
-        <img id="frozenImage" alt="" />
-        <canvas id="frameCanvas"></canvas>
-        <canvas id="overlayCanvas"></canvas>
+    <!-- Top-left back button (frozen mode only) -->
+    <button class="back-btn" id="backBtn" aria-label="უკან">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+  </div>
 
-        <!-- Shutter button -->
-        <button type="button" class="capture-btn" id="freezeFrameBtn" aria-label="Freeze frame">
-          <span class="capture-btn__outer">
-            <span class="capture-btn__inner"></span>
-          </span>
-        </button>
+  <!-- ═══ CONTROL PANEL ════════════════════════════════════════ -->
+  <div class="panel" id="controlPanel">
 
-        <!-- Empty state -->
-        <div class="camera-empty" id="cameraEmpty">
-          <div class="camera-empty__box">
-            <strong>კამერა ჯერ არ არის ჩართული</strong>
-            <span>ტელეფონში გამოიყენე HTTPS ან localhost, რათა კამერის ნებართვა იმუშაოს.</span>
+    <!-- Primary actions -->
+    <div class="btn-row">
+      <button class="btn btn--primary" id="startCameraBtn">
+        <svg class="btn__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="10" cy="10" r="7"/>
+          <circle cx="10" cy="10" r="3" fill="currentColor" stroke="none"/>
+        </svg>
+        კამერა
+      </button>
+
+      <label class="btn btn--upload">
+        <input type="file" id="textureInput" accept="image/*" />
+        <svg class="btn__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M10 3v9M7 6l3-3 3 3"/>
+          <rect x="3" y="14" width="14" height="3" rx="1.5"/>
+        </svg>
+        ტექსტურა
+      </label>
+
+      <button class="btn" id="resetPointsBtn">
+        <svg class="btn__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M4.5 10a5.5 5.5 0 1 1 1.4 3.6"/>
+          <path d="M4 14.5V10h4.5"/>
+        </svg>
+        სუფთა
+      </button>
+
+      <button class="btn" id="screenshotBtn">
+        <svg class="btn__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="3" y="5" width="14" height="11" rx="2"/>
+          <circle cx="10" cy="11" r="3"/>
+          <path d="M7 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/>
+        </svg>
+        სქრინი
+      </button>
+    </div>
+
+    <!-- Texture file name -->
+    <div class="file-chip" id="textureNameRow" hidden>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="1" width="9" height="13" rx="1.5"/>
+        <path d="M11 1v4h4"/>
+        <path d="M11 1l4 4"/>
+      </svg>
+      <span id="textureName"></span>
+    </div>
+
+    <!-- Sliders -->
+    <div class="sliders">
+      <div class="slider-block">
+        <div class="slider-header">
+          <span class="slider-label">ტექსტურის ზომა</span>
+          <div class="slider-value-wrap">
+            <input type="number" id="scaleInput" class="slider-num" min="5" max="300" value="100" />
+            <span class="slider-unit">%</span>
           </div>
         </div>
+        <input type="range" id="scaleRange" class="slider" min="5" max="300" value="100" />
+        <div class="slider-tips">
+          <span>↙ მცირე (მეტი გამეორება)</span>
+          <span>დიდი (ნაკლები) ↗</span>
+        </div>
       </div>
 
-      <!-- Legend -->
-      <div class="legend">
-        <span><i class="dot dot--point"></i> კუთხის სახელური</span>
-        <span><i class="dot dot--wall"></i>  კედლის კონტური</span>
-        <span><i class="dot dot--texture"></i> ტექსტურის overlay</span>
-      </div>
-    </section>
-
-    <!-- ════ CONTROLS ════════════════════════════════════════════ -->
-    <section class="ar-card ar-controls" id="controlPanel">
-
-      <!-- Primary actions -->
-      <div class="control-grid">
-        <button type="button" class="ar-btn ar-btn--primary" id="startCameraBtn">
-          <svg class="btn-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-            <circle cx="10" cy="10" r="7"/>
-            <circle cx="10" cy="10" r="3" fill="currentColor" stroke="none"/>
-          </svg>
-          კამერა
-        </button>
-
-        <label class="ar-upload">
-          <input type="file" id="textureInput" accept="image/*" />
-          <svg class="btn-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-            <path d="M10 3v10M6 7l4-4 4 4"/>
-            <rect x="3" y="14" width="14" height="3" rx="1.5"/>
-          </svg>
-          <span>ტექსტურა</span>
-        </label>
-
-        <button type="button" class="ar-btn" id="resetPointsBtn">
-          <svg class="btn-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-            <path d="M4 10a6 6 0 1 1 1.5 4"/>
-            <path d="M4 14v-4h4"/>
-          </svg>
-          გასუფთავება
-        </button>
-
-        <button type="button" class="ar-btn" id="screenshotBtn">
-          <svg class="btn-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-            <rect x="3" y="5" width="14" height="11" rx="2"/>
-            <circle cx="10" cy="11" r="3"/>
-            <path d="M7 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/>
-          </svg>
-          სქრინი
-        </button>
-      </div>
-
-      <!-- Texture name feedback -->
-      <div class="texture-name-row" id="textureNameRow" hidden>
-        <span class="texture-name-label">ატვირთული:</span>
-        <span class="texture-name" id="textureName"></span>
-      </div>
-
-      <!-- Sliders -->
-      <div class="sliders-grid">
-
-        <div class="slider-row">
-          <label class="slider-label" for="scaleRange">
-            <span>ტექსტურის ზომა</span>
-            <input type="number" id="scaleInput" class="slider-number" min="5" max="300" step="1" value="100" />
+      <div class="slider-block">
+        <div class="slider-header">
+          <span class="slider-label">გამჭვირვალობა</span>
+          <div class="slider-value-wrap">
+            <input type="number" id="opacityInput" class="slider-num" min="10" max="100" value="85" />
             <span class="slider-unit">%</span>
-          </label>
-          <input type="range" id="scaleRange" class="slider" min="5" max="300" step="1" value="100" />
-          <div class="slider-hints">
-            <span>მცირე (მეტი განმეორება)</span>
-            <span>დიდი (ნაკლები განმეორება)</span>
           </div>
         </div>
-
-        <div class="slider-row">
-          <label class="slider-label" for="opacityRange">
-            <span>გამჭვირვალობა</span>
-            <input type="number" id="opacityInput" class="slider-number" min="10" max="100" step="1" value="85" />
-            <span class="slider-unit">%</span>
-          </label>
-          <input type="range" id="opacityRange" class="slider" min="10" max="100" step="1" value="85" />
-        </div>
-
+        <input type="range" id="opacityRange" class="slider" min="10" max="100" value="85" />
       </div>
+    </div>
 
-      <!-- Status -->
-      <div class="status-box">
-        <strong id="statusTitle">მზადაა</strong>
-        <p id="statusText">გახსენი კამერა, მოათავსე კედელი კადრში, დააჭირე მრგვალ ღილაკს, შემდეგ ატვირთე ტექსტურა.</p>
-      </div>
+    <!-- Status -->
+    <div class="status">
+      <strong id="statusTitle">მზადაა</strong>
+      <p id="statusText">გახსენი კამერა, კედელი მოარგე კადრში, დააჭირე მრგვალ ღილაკს, შემდეგ ატვირთე ტექსტურა.</p>
+    </div>
 
-    </section>
-  </main>
+  </div><!-- /panel -->
 
   <script src="./app.js"></script>
   <script>
-    // Show texture name row when file chosen
+    // Back button → unfreeze (same as startCameraBtn when frozen)
+    document.getElementById("backBtn").addEventListener("click", function () {
+      document.getElementById("startCameraBtn").click();
+    });
+    // Show texture filename
     document.getElementById("textureInput").addEventListener("change", function (e) {
       const row = document.getElementById("textureNameRow");
       const nm  = document.getElementById("textureName");
