@@ -120,7 +120,11 @@
         DOM.cameraEmpty.hidden = true;
         const vw = DOM.cameraFeed.videoWidth;
         const vh = DOM.cameraFeed.videoHeight;
-        if (vw && vh) DOM.cameraWrap.style.aspectRatio = vw + "/" + vh;
+        // Desktop-only: aspect-ratio is handled by CSS (9/16). On mobile,
+        // forcing the video's native ratio pushes the control panel off-screen.
+        if (vw && vh && window.innerWidth > 760) {
+          DOM.cameraWrap.style.aspectRatio = vw + "/" + vh;
+        }
         resizeCanvas();
         setStatus("კამერა მზადაა", "კედელი კადრში მოარგე და დააჭირე მრგვალ ღილაკს.");
       };
