@@ -178,14 +178,39 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   CONTROL PANEL
+   CONFIRM BUTTON  (green tick — adjusting phase only)
+═══════════════════════════════════════════════════════════ */
+.confirm-btn {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  right: 14px;
+  z-index: 10;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: #22c55e;
+  box-shadow: 0 4px 16px rgba(34,197,94,0.5);
+  color: #fff;
+  cursor: pointer;
+  display: none;           /* shown only by JS in adjusting phase */
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.confirm-btn:active { transform: scale(0.93); box-shadow: 0 2px 8px rgba(34,197,94,0.4); }
+.confirm-btn svg { width: 26px; height: 26px; }
+
+/* ═══════════════════════════════════════════════════════════
+   CONTROL PANEL  — hidden by default, shown in preview phase
 ═══════════════════════════════════════════════════════════ */
 .panel {
   flex: 0 0 auto;
   background: var(--panel);
   border-top: 1px solid var(--border);
   padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
-  display: flex;
+  display: none;           /* JS sets display:flex in preview phase */
   flex-direction: column;
   gap: 12px;
 }
@@ -327,22 +352,6 @@ body {
   color: var(--muted);
   line-height: 1.5;
 }
-
-/* ═══════════════════════════════════════════════════════════
-   STATE CLASSES  (toggled by JS on <body>)
-═══════════════════════════════════════════════════════════ */
-
-/* --- camera-live: shutter visible, feed shown ───────── */
-body.camera-live  #cameraFeed    { display: block; }
-body.camera-live  .capture-btn   { display: block; }
-body.camera-live  .back-btn      { display: none;  }
-body.camera-live  .camera-empty  { display: none;  }
-
-/* --- camera-frozen: photo shown, back btn visible ───── */
-body.camera-frozen #frozenImage  { display: block; }
-body.camera-frozen .capture-btn  { display: none;  }
-body.camera-frozen .back-btn     { display: flex;  }
-body.camera-frozen .camera-empty { display: none;  }
 
 /* Safe area bottom for shutter */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {

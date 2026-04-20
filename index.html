@@ -34,10 +34,17 @@
       </div>
     </div>
 
-    <!-- Top-left back button (frozen mode only) -->
+    <!-- Top-left back button -->
     <button class="back-btn" id="backBtn" aria-label="უკან">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+
+    <!-- Top-right confirm button (adjusting phase only) -->
+    <button class="confirm-btn" id="confirmBtn" aria-label="დადასტურება">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 13l4 4L19 7"/>
       </svg>
     </button>
   </div>
@@ -130,20 +137,5 @@
   </div><!-- /panel -->
 
   <script src="./app.js"></script>
-  <script>
-    // Back button → unfreeze (same as startCameraBtn when frozen)
-    document.getElementById("backBtn").addEventListener("click", function () {
-      document.getElementById("startCameraBtn").click();
-    });
-    // Show texture filename
-    document.getElementById("textureInput").addEventListener("change", function (e) {
-      const row = document.getElementById("textureNameRow");
-      const nm  = document.getElementById("textureName");
-      if (e.target.files && e.target.files[0]) {
-        nm.textContent = e.target.files[0].name;
-        row.hidden = false;
-      }
-    });
-  </script>
 </body>
 </html>
