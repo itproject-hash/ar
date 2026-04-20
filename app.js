@@ -70,7 +70,7 @@
     DOM.frozenImage.style.display  = (phase === "adjusting" || phase === "preview") ? "block" : "none";
 
     // Shutter button
-    DOM.freezeFrameBtn.hidden = phase !== "live";
+    DOM.freezeFrameBtn.style.display = phase === "live" ? "block" : "none";
 
     // Back button (top-left)
     DOM.backBtn.style.display = (phase === "live" || phase === "adjusting") ? "flex" : "none";
